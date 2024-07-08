@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import express from 'express';
 
 class SPARQLQueryDispatcher {
     constructor(endpoint) {
@@ -24,15 +23,9 @@ SELECT ?item ?itemLabel ?pic WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }`;
 
-const app = express();
-const port = 3000;
-
-app.get('/sparql', async (req, res) => {
-    const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
-    const results = await queryDispatcher.query(sparqlQuery);
-    res.json(results);
-});
-
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/sparql`);
+const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
+queryDispatcher.query(sparqlQuery).then(results => {
+    console.log(JSON.stringify(results, null, 2));
+}).catch(error => {
+    console.error('Error executing query:', error);
 });

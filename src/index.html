@@ -39,7 +39,7 @@
           console.log(JSON.stringify(results, null, 2)); // Dump results to terminal
           displayResults(results);
           displayElapsedTime(elapsedTime);
-          initializeGlobe();
+          initializeGlobe(results);
         } catch (error) {
           console.error('Error executing query:', error);
           document.getElementById('results').value = 'Error fetching data. Please try again.';
@@ -51,29 +51,61 @@
         resultsTextarea.value = JSON.stringify(results, null, 2); // Insert results into the textarea
       }
 
+      function displayDebugInfo(message) {
+        const debugTextarea = document.getElementById('debug-info');
+        debugTextarea.value += message + "\n";
+      }
+
+      function displayMatchesInfo(matches) {
+        const matchesTextarea = document.getElementById('matches');
+        matchesTextarea.value += matches + "\n";
+      }
+
       function displayElapsedTime(time) {
         const elapsedTimeDiv = document.getElementById('elapsed-time');
         elapsedTimeDiv.textContent = `Query execution time: ${time.toFixed(2)} seconds`;
       }
 
-      function initializeGlobe() {
+      function parseWKT(wkt) {
+        displayMatchesInfo(`wkt value: ${wkt}`); // Log the WKT value
+        try {
+          // Remove "POINT(" prefix and ")" suffix, then split by space
+          const coordinates = wkt.replace('Point(', '').replace(')', '').split(' ');
+          const longitude = parseFloat(coordinates[0]);
+          const latitude = parseFloat(coordinates[1]);
+          const result = { longitude, latitude };
+          displayMatchesInfo(`Parsed coordinates: ${JSON.stringify(result)}`);
+          return result;
+        } catch (error) {
+          displayMatchesInfo(`Error parsing WKT: ${error}`);
+        }
+        return null;
+      }
+
+      function initializeGlobe(results) {
         document.getElementById('earth_div').style.display = 'block';
         var earth = new WE.map('earth_div');
         WE.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(earth);
 
-        var marker = WE.marker([51.5, -0.09]).addTo(earth);
-        marker.bindPopup("<b>Hello world!</b><br>I am a popup.<br /><span style='font-size:10px;color:#999'>Tip: Another popup is hidden in Cairo..</span>", {maxWidth: 150, closeButton: true}).openPopup();
-
-        var marker2 = WE.marker([30.058056, 31.228889]).addTo(earth);
-        marker2.bindPopup("<b>Cairo</b><br>Yay, you found me!", {maxWidth: 120, closeButton: false});
-
-        var markerCustom = WE.marker([50, -9], '/img/logo-webglearth-white-100.png', 100, 24).addTo(earth);
+        results.results.bindings.forEach(binding => {
+          const location = parseWKT(binding.location.value);
+          const label = binding.cityLabel.value;
+          if (location) {
+            const marker = WE.marker([location.latitude, location.longitude]).addTo(earth);
+            marker.bindPopup(`<b>${label}</b>`, { maxWidth: 150, closeButton: true }).openPopup();
+            displayDebugInfo(`Added marker: ${label} at (${location.latitude}, ${location.longitude})`);
+          } else {
+            displayDebugInfo(`Failed to parse location for ${label}`);
+          }
+        });
 
         earth.setView([51.505, 0], 6);
       }
 
       function initialize() {
         document.getElementById('results').value = 'Waiting for data...';
+        document.getElementById('debug-info').value = 'Waiting for data...\n';
+        document.getElementById('matches').value = 'Matching function output...\n';
         document.getElementById('elapsed-time').textContent = '';
         fetchSPARQLResults();
       }
@@ -82,7 +114,7 @@
       html, body { padding: 0; margin: 0; background-color: black; color: white; }
       #container { display: flex; flex-direction: column; align-items: center; }
       #earth_div { width: 600px; height: 400px; margin: 20px; border: 1px solid white; display: none; }
-      #results { width: 600px; height: 200px; margin-top: 10px; }
+      #results, #debug-info, #matches { width: 600px; height: 200px; margin-top: 10px; }
       #elapsed-time { width: 600px; margin-top: 10px; text-align: center; }
     </style>
     <title>WebGL Earth API: Markers and pop-up on a globe example</title>
@@ -92,6 +124,8 @@
     <div id="container">
       <div id="earth_div"></div>
       <textarea id="results" readonly>Waiting for data...</textarea>
+      <textarea id="debug-info" readonly>Waiting for data...</textarea>
+      <textarea id="matches" readonly>Matching function output...</textarea>
       <div id="elapsed-time"></div>
     </div>
   </body>

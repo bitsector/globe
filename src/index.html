@@ -31,12 +31,18 @@
 
       async function fetchSPARQLResults() {
         const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
+        const startTime = new Date();
         try {
           const results = await queryDispatcher.query(sparqlQuery);
+          const endTime = new Date();
+          const elapsedTime = (endTime - startTime) / 1000; // Convert to seconds
           console.log(JSON.stringify(results, null, 2)); // Dump results to terminal
           displayResults(results);
+          displayElapsedTime(elapsedTime);
+          initializeGlobe();
         } catch (error) {
           console.error('Error executing query:', error);
+          document.getElementById('results').value = 'Error fetching data. Please try again.';
         }
       }
 
@@ -45,7 +51,13 @@
         resultsTextarea.value = JSON.stringify(results, null, 2); // Insert results into the textarea
       }
 
-      function initialize() {
+      function displayElapsedTime(time) {
+        const elapsedTimeDiv = document.getElementById('elapsed-time');
+        elapsedTimeDiv.textContent = `Query execution time: ${time.toFixed(2)} seconds`;
+      }
+
+      function initializeGlobe() {
+        document.getElementById('earth_div').style.display = 'block';
         var earth = new WE.map('earth_div');
         WE.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(earth);
 
@@ -58,15 +70,20 @@
         var markerCustom = WE.marker([50, -9], '/img/logo-webglearth-white-100.png', 100, 24).addTo(earth);
 
         earth.setView([51.505, 0], 6);
+      }
 
-        fetchSPARQLResults(); // Fetch SPARQL results when the map is initialized
+      function initialize() {
+        document.getElementById('results').value = 'Waiting for data...';
+        document.getElementById('elapsed-time').textContent = '';
+        fetchSPARQLResults();
       }
     </script>
     <style>
-      html, body { padding: 0; margin: 0; background-color: black; }
+      html, body { padding: 0; margin: 0; background-color: black; color: white; }
       #container { display: flex; flex-direction: column; align-items: center; }
-      #earth_div { width: 600px; height: 400px; margin: 20px; border: 1px solid white; }
+      #earth_div { width: 600px; height: 400px; margin: 20px; border: 1px solid white; display: none; }
       #results { width: 600px; height: 200px; margin-top: 10px; }
+      #elapsed-time { width: 600px; margin-top: 10px; text-align: center; }
     </style>
     <title>WebGL Earth API: Markers and pop-up on a globe example</title>
     <meta name="description" content="Add markers with a pop-up to an open-source 3D globe and display it on a web or mobile devices.">
@@ -74,7 +91,8 @@
   <body onload="initialize()">
     <div id="container">
       <div id="earth_div"></div>
-      <textarea id="results" readonly></textarea>
+      <textarea id="results" readonly>Waiting for data...</textarea>
+      <div id="elapsed-time"></div>
     </div>
   </body>
 </html>

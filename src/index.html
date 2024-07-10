@@ -3,23 +3,36 @@
   <head>
     <script src="https://www.webglearth.com/v2/api.js"></script>
     <script>
+      class SPARQLQueryDispatcher {
+        constructor(endpoint) {
+          this.endpoint = endpoint;
+        }
+
+        query(sparqlQuery) {
+          const fullUrl = this.endpoint + '?query=' + encodeURIComponent(sparqlQuery);
+          const headers = { 'Accept': 'application/sparql-results+json' };
+
+          return fetch(fullUrl, { headers }).then(body => body.json());
+        }
+      }
+
+      const endpointUrl = 'https://query.wikidata.org/sparql';
+      const sparqlQuery = `#Cities as big as Eindhoven give or take 1000
+      #defaultView:Map
+      SELECT ?city ?cityLabel ?location ?populatie2 WHERE {
+        { SELECT DISTINCT * WHERE {
+          wd:Q9832 wdt:P1082 ?populatie .
+          ?city wdt:P1082 ?populatie2 ;
+            wdt:P625 ?location .
+          FILTER (abs(?populatie - ?populatie2) < 1000)
+        } }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl" }
+      }`;
+
       async function fetchSPARQLResults() {
-        const endpointUrl = 'https://query.wikidata.org/sparql';
-        const sparqlQuery = `#Cats, with pictures
-        #title: Cats, with pictures
-        #defaultView:ImageGrid
-        SELECT ?item ?itemLabel ?pic WHERE {
-          ?item wdt:P31 wd:Q146;
-            wdt:P18 ?pic.
-          SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-        }`;
-
-        const fullUrl = endpointUrl + '?query=' + encodeURIComponent(sparqlQuery);
-        const headers = { 'Accept': 'application/sparql-results+json' };
-
+        const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
         try {
-          const response = await fetch(fullUrl, { headers });
-          const results = await response.json();
+          const results = await queryDispatcher.query(sparqlQuery);
           console.log(JSON.stringify(results, null, 2)); // Dump results to terminal
           displayResults(results);
         } catch (error) {
@@ -50,9 +63,9 @@
       }
     </script>
     <style>
-      html, body{padding: 0; margin: 0; background-color: black;}
-      #earth_div{top: 0; right: 0; bottom: 0; left: 0; position: absolute !important;}
-      #results{color: white; padding: 10px;}
+      html, body { padding: 0; margin: 0; background-color: black; }
+      #earth_div { top: 0; right: 0; bottom: 0; left: 0; position: absolute !important; }
+      #results { color: white; padding: 10px; }
     </style>
     <title>WebGL Earth API: Markers and pop-up on a globe example</title>
     <meta name="description" content="Add markers with a pop-up to an open-source 3D globe and display it on a web or mobile devices.">

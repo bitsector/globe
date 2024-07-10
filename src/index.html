@@ -41,8 +41,8 @@
       }
 
       function displayResults(results) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = JSON.stringify(results, null, 2);
+        const resultsTextarea = document.getElementById('results');
+        resultsTextarea.value = JSON.stringify(results, null, 2); // Insert results into the textarea
       }
 
       function initialize() {
@@ -64,14 +64,17 @@
     </script>
     <style>
       html, body { padding: 0; margin: 0; background-color: black; }
-      #earth_div { top: 0; right: 0; bottom: 0; left: 0; position: absolute !important; }
-      #results { color: white; padding: 10px; }
+      #container { display: flex; flex-direction: column; align-items: center; }
+      #earth_div { width: 600px; height: 400px; margin: 20px; border: 1px solid white; }
+      #results { width: 600px; height: 200px; margin-top: 10px; }
     </style>
     <title>WebGL Earth API: Markers and pop-up on a globe example</title>
     <meta name="description" content="Add markers with a pop-up to an open-source 3D globe and display it on a web or mobile devices.">
   </head>
   <body onload="initialize()">
-    <div id="earth_div"></div>
-    <div id="results"></div>
+    <div id="container">
+      <div id="earth_div"></div>
+      <textarea id="results" readonly></textarea>
+    </div>
   </body>
 </html>

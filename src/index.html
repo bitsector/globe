@@ -33,6 +33,7 @@
         const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
         const startTime = new Date();
         try {
+          document.getElementById('loading-message').style.display = 'block';
           const results = await queryDispatcher.query(sparqlQuery);
           const endTime = new Date();
           const elapsedTime = (endTime - startTime) / 1000; // Convert to seconds
@@ -40,9 +41,11 @@
           displayResults(results);
           displayElapsedTime(elapsedTime);
           initializeGlobe(results);
+          document.getElementById('loading-message').style.display = 'none';
         } catch (error) {
           console.error('Error executing query:', error);
           document.getElementById('results').value = 'Error fetching data. Please try again.';
+          document.getElementById('loading-message').style.display = 'none';
         }
       }
 
@@ -69,7 +72,7 @@
       function parseWKT(wkt) {
         displayMatchesInfo(`wkt value: ${wkt}`); // Log the WKT value
         try {
-          // Remove "POINT(" prefix and ")" suffix, then split by space
+          // Remove "Point(" prefix and ")" suffix, then split by space
           const coordinates = wkt.replace('Point(', '').replace(')', '').split(' ');
           const longitude = parseFloat(coordinates[0]);
           const latitude = parseFloat(coordinates[1]);
@@ -111,21 +114,27 @@
       }
     </script>
     <style>
-      html, body { padding: 0; margin: 0; background-color: black; color: white; }
-      #container { display: flex; flex-direction: column; align-items: center; }
-      #earth_div { width: 600px; height: 400px; margin: 20px; border: 1px solid white; display: none; }
-      #results, #debug-info, #matches { width: 600px; height: 200px; margin-top: 10px; }
-      #elapsed-time { width: 600px; margin-top: 10px; text-align: center; }
+      html, body { padding: 0; margin: 0; background-color: black; color: white; height: 100%; }
+      #container { display: flex; flex-direction: column; height: 100%; }
+      #earth_div { flex-grow: 1; width: 100%; position: relative; }
+      #loading-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; }
+      #textboxes-container { display: flex; justify-content: space-between; padding: 10px; }
+      #textboxes-container textarea { width: 32%; height: 100px; background-color: #222; color: white; border: none; resize: none; }
+      #elapsed-time { width: 100%; padding: 10px; text-align: center; background-color: #444; }
     </style>
     <title>WebGL Earth API: Markers and pop-up on a globe example</title>
-    <meta name="description" content="Add markers with a pop-up to an open-source 3D globe and display it on a web or mobile devices.">
+    <meta name="description" content="Add markers with a pop-up to an open-source D globe and display it on a web or mobile devices.">
   </head>
   <body onload="initialize()">
     <div id="container">
-      <div id="earth_div"></div>
-      <textarea id="results" readonly>Waiting for data...</textarea>
-      <textarea id="debug-info" readonly>Waiting for data...</textarea>
-      <textarea id="matches" readonly>Matching function output...</textarea>
+      <div id="earth_div">
+        <div id="loading-message">Waiting for data...</div>
+      </div>
+      <div id="textboxes-container">
+        <textarea id="results" readonly>Waiting for data...</textarea>
+        <textarea id="debug-info" readonly>Waiting for data...</textarea>
+        <textarea id="matches" readonly>Matching function output...</textarea>
+      </div>
       <div id="elapsed-time"></div>
     </div>
   </body>

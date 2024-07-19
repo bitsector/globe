@@ -130,3 +130,4 @@ dist
 .pnp.*
 
 /bin/*
+.DS_Store

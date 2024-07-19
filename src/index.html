@@ -36,6 +36,72 @@
           SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
         }
       `;
+      
+      async function scrapeWreckDivingSites() {
+        const axios = require('axios');
+        const cheerio = require('cheerio');
+
+        const baseURL = 'https://en.wikipedia.org';
+        const mainPageURL = `${baseURL}/wiki/List_of_wreck_diving_sites`;
+
+        async function fetchHTML(url) {
+          const { data } = await axios.get(url);
+          return cheerio.load(data);
+        }
+
+        async function extractLinks(mainPageURL) {
+          const $ = await fetchHTML(mainPageURL);
+          const links = [];
+
+          $('a').each((i, element) => {
+            const href = $(element).attr('href');
+            if (href && href.startsWith('/wiki/')) {
+              links.push(baseURL + href);
+            }
+          });
+
+          return links;
+        }
+
+        async function extractCoordinates(url) {
+          try {
+            const $ = await fetchHTML(url);
+            const coordinates = {};
+
+            // Wikipedia uses a specific class for coordinates
+            const lat = $('.latitude').first().text();
+            const lon = $('.longitude').first().text();
+
+            if (lat && lon) {
+              coordinates.latitude = lat;
+              coordinates.longitude = lon;
+              coordinates.url = url;
+            }
+
+            return coordinates;
+          } catch (error) {
+            console.error(`Error fetching coordinates from ${url}:`, error);
+            return null;
+          }
+        }
+
+        try {
+          const links = await extractLinks(mainPageURL);
+          const results = [];
+
+          for (const link of links) {
+            const coordinates = await extractCoordinates(link);
+            if (coordinates) {
+              results.push(coordinates);
+            }
+          }
+
+          return results;
+        } catch (error) {
+          console.error('Error in scrapeWreckDivingSites function:', error);
+          return [];
+        }
+      }
 
       async function fetchSPARQLResults() {
         const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);

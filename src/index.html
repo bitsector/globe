@@ -29,12 +29,20 @@
         SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl" }
       }`;
 
+      const sparqlQuery2 = `
+        SELECT ?city ?cityLabel ?location WHERE {
+          VALUES ?city { wd:Q60 wd:Q64 wd:Q84 }  # New York City, Los Angeles, and London
+          ?city wdt:P625 ?location.
+          SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+        }
+      `;
+
       async function fetchSPARQLResults() {
         const queryDispatcher = new SPARQLQueryDispatcher(endpointUrl);
         const startTime = new Date();
         try {
           document.getElementById('loading-message').style.display = 'block';
-          const results = await queryDispatcher.query(sparqlQuery);
+          const results = await queryDispatcher.query(sparqlQuery); // Use sparqlQuery2 for the stub query
           const endTime = new Date();
           const elapsedTime = (endTime - startTime) / 1000; // Convert to seconds
           console.log(JSON.stringify(results, null, 2)); // Dump results to terminal
@@ -95,7 +103,7 @@
           const label = binding.cityLabel.value;
           if (location) {
             const marker = WE.marker([location.latitude, location.longitude]).addTo(earth);
-            marker.bindPopup(`<b>${label}</b>`, { maxWidth: 150, closeButton: true }).openPopup();
+            // marker.bindPopup(`<b>${label}</b>`, { maxWidth: 150, closeButton: true }).openPopup();
             displayDebugInfo(`Added marker: ${label} at (${location.latitude}, ${location.longitude})`);
           } else {
             displayDebugInfo(`Failed to parse location for ${label}`);
